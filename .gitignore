@@ -1,0 +1,53 @@
+# Node modules
+/node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Environment variable files
+.env
+.env.*.local
+
+# Build output
+/dist
+/build
+
+# Dependency directories
+jspm_packages/
+
+# VSCode directory
+.vscode/
+
+# IDEs and Editors
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Test coverage directory
+/coverage/
+
+# Parcel cache (if you're using Parcel bundler)
+.cache/
+
+# Next.js build output
+.next/
+
+# Production
+/prod/
+
+# Temporary files
+*.swp
+*.swo
+
+# NPM package lock file (if you want to exclude it from version control)
+/package-lock.json
+/yarn.lock
+
+# TypeScript build output (if using TypeScript)
+*.tsbuildinfo

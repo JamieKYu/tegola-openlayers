@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>theyuzone family travel map</title>
+  <link rel="stylesheet" href="https://unpkg.com/ol@latest/ol.css">
+  <script src="https://unpkg.com/ol@latest/dist/ol.js"></script>
+</head>
+<body>
+  <div id="map" style="height: 1000px;"></div>
+  <script>
+    const baseLayer = new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: 'https://{a-c}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        attributions: '© <a href="https://carto.com/">CARTO</a>'
+      })
+    });
+
+    // Vector tile source (equivalent to Leaflet VectorGrid)
+    const vectorTileSource = new ol.source.VectorTile({
+      format: new ol.format.MVT(),
+      url: 'https://maps.theyuzone.com/maps/default/{z}/{x}/{y}.pbf'
+    });
+
+    // Style for vector features
+    const vectorTileLayer = new ol.layer.VectorTile({
+      source: vectorTileSource,
+      style: function (feature, resolution) {
+        const zoom = map.getView().getZoom();
+
+        let radius = 10;
+        let color = 'rgba(128, 90, 128, 0.70)';
+        if (zoom < 10) {
+          radius = 20;
+          color = 'rgba(128, 90, 128, 0.1)';
+        } else if (zoom > 15) {
+          radius = 4;
+          color = 'rgba(128, 0, 0, 1.0)';
+        }
+
+        return new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: radius,
+            fill: new ol.style.Fill({ color: color }),
+            stroke: new ol.style.Stroke({ color: color, width: 1 })
+          })
+        });
+      }
+    });
+
+    const map = new ol.Map({
+      target: 'map',
+      layers: [baseLayer, vectorTileLayer],
+      view: new ol.View({
+        center: ol.proj.fromLonLat([-97.134939,37.118828]),
+        zoom: 5,
+        constrainResolution: false,
+      })
+    });
+
+    map.on('click', function (event) {
+      map.forEachFeatureAtPixel(event.pixel, function (feature) {
+        const photoId = feature.get('photo_id');
+
+        if (photoId) {
+          const apiUrl = `https://photos.theyuzone.com/ws.php?format=json&method=pwg.images.getInfo&image_id=${photoId}`;
+
+          // Make an HTTP request to fetch image information
+          fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+              if (data.stat === 'ok' && data.result && data.result.page_url) {
+                // Open the page_url in a new tab
+                window.open(data.result.page_url, '_blank');
+              } else {
+                console.error('Error: Invalid response or no page_url');
+              }
+            })
+            .catch(error => {
+              console.error('Error fetching image info:', error);
+            });
+        }
+      });
+    });
+
+    map.on('pointermove', function (event) {
+      const feature = map.forEachFeatureAtPixel(event.pixel, function (feature) {
+        return feature;
+      });
+
+      map.getTargetElement().style.cursor = feature ? 'pointer' : 'default';
+    });
+
+  </script>
+</body>
+</html>
