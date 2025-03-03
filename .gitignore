@@ -44,6 +44,7 @@ jspm_packages/
 # Temporary files
 *.swp
 *.swo
+*.geojson
 
 # NPM package lock file (if you want to exclude it from version control)
 /package-lock.json

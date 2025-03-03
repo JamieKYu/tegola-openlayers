@@ -6,10 +6,22 @@
   <title>theyuzone family travel map</title>
   <link rel="stylesheet" href="https://unpkg.com/ol@latest/ol.css">
   <script src="https://unpkg.com/ol@latest/dist/ol.js"></script>
+  <style>
+      @media screen and (min-width: 48em) {
+          .site-content {
+              padding: 0 !important;
+          }
+      }
+
+      .site-content {
+          padding: 0 !important;
+      }
+  </style>
 </head>
 <body>
   <div id="map" style="height: 1000px;"></div>
   <script>
+
     const baseLayer = new ol.layer.Tile({
       source: new ol.source.XYZ({
         url: 'https://{a-c}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
@@ -17,47 +29,102 @@
       })
     });
 
-    // Vector tile source (equivalent to Leaflet VectorGrid)
-    const vectorTileSource = new ol.source.VectorTile({
+    //const baseLayer = new ol.layer.Tile({
+    //  source: new ol.source.OSM()
+    //});
+
+    // Map
+    const map = new ol.Map({
+      target: 'map',
+      layers: [baseLayer],
+      //layers: [baseLayer, photosLayer],
+      view: new ol.View({
+        center: ol.proj.fromLonLat([-97.134939,37.118828]),
+        zoom: 5,
+      }),
+    });
+
+    // Function to generate a random color
+    function getRandomColor() {
+      return `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 0.25)`;
+    }
+
+    // Vector tile source for countries
+    const countriesSource = new ol.source.VectorTile({
+      format: new ol.format.MVT(),
+      url: 'https://maps.theyuzone.com/maps/visited/{z}/{x}/{y}.pbf',
+    });
+
+    // Dictionary to store assigned colors for each country
+    const countryColors = {};
+
+    // Style function to apply random color per country
+    const getCountriesStyle = function (feature) {
+      const countryId = feature.get('iso_a2');
+      if (!countryColors[countryId]) {
+        countryColors[countryId] = getRandomColor();
+      }
+
+      return new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: countryColors[countryId],
+        }),
+        stroke: new ol.style.Stroke({
+          color: 'gray',
+          width: 0.25,
+        }),
+      });
+    };
+
+    // Vector tile layers
+    const countriesLayer = new ol.layer.VectorTile({
+      source: countriesSource,
+      style: getCountriesStyle,
+    });
+
+    map.addLayer(countriesLayer);
+
+    const photosSource = new ol.source.VectorTile({
       format: new ol.format.MVT(),
       url: 'https://maps.theyuzone.com/maps/default/{z}/{x}/{y}.pbf'
     });
 
-    // Style for vector features
-    const vectorTileLayer = new ol.layer.VectorTile({
-      source: vectorTileSource,
-      style: function (feature, resolution) {
-        const zoom = map.getView().getZoom();
-
-        let radius = 10;
+    // Function to generate a dynamic style based on zoom level
+    function getPhotoStyle(view) {
+      return function (feature, resolution) {
+        const zoom = view.getZoom();
+        let radius = 5;
         let color = 'rgba(128, 90, 128, 0.70)';
+
         if (zoom < 10) {
-          radius = 20;
+          radius = 8;
           color = 'rgba(128, 90, 128, 0.1)';
         } else if (zoom > 15) {
-          radius = 4;
-          color = 'rgba(128, 0, 0, 1.0)';
+          radius = 3;
+          color = 'rgba(128, 90, 128, 1.0)';
         }
 
         return new ol.style.Style({
           image: new ol.style.Circle({
             radius: radius,
-            fill: new ol.style.Fill({ color: color }),
-            stroke: new ol.style.Stroke({ color: color, width: 1 })
-          })
+            fill: new ol.style.Fill({
+              color: color,
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(128, 90, 128, 1.0)',
+              width: 0.1,
+            }),
+          }),
         });
-      }
+      };
+    }
+
+    const photosLayer = new ol.layer.VectorTile({
+      source: photosSource,
+      style: getPhotoStyle(map.getView()),
     });
 
-    const map = new ol.Map({
-      target: 'map',
-      layers: [baseLayer, vectorTileLayer],
-      view: new ol.View({
-        center: ol.proj.fromLonLat([-97.134939,37.118828]),
-        zoom: 5,
-        constrainResolution: false,
-      })
-    });
+    map.addLayer(photosLayer);
 
     map.on('click', function (event) {
       map.forEachFeatureAtPixel(event.pixel, function (feature) {
@@ -89,7 +156,7 @@
         return feature;
       });
 
-      map.getTargetElement().style.cursor = feature ? 'pointer' : 'default';
+      map.getTargetElement().style.cursor = feature && feature.getType() === 'Point' ? 'pointer' : 'default';
     });
 
   </script>
