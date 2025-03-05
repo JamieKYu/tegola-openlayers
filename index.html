@@ -37,22 +37,21 @@
     const map = new ol.Map({
       target: 'map',
       layers: [baseLayer],
-      //layers: [baseLayer, photosLayer],
       view: new ol.View({
         center: ol.proj.fromLonLat([-97.134939,37.118828]),
-        zoom: 5,
+        zoom: 3,
       }),
     });
 
     // Function to generate a random color
     function getRandomColor() {
-      return `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 0.25)`;
+      return `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 0.18)`;
     }
 
     // Vector tile source for countries
     const countriesSource = new ol.source.VectorTile({
       format: new ol.format.MVT(),
-      url: 'https://maps.theyuzone.com/maps/visited/{z}/{x}/{y}.pbf',
+      url: 'https://maps.theyuzone.com/maps/visited/family_photos_countries/{z}/{x}/{y}.pbf',
     });
 
     // Dictionary to store assigned colors for each country
@@ -84,6 +83,45 @@
 
     map.addLayer(countriesLayer);
 
+    // ------------------------------------------------------
+
+    // Vector tile source for countries
+    const countryDivisionsSource = new ol.source.VectorTile({
+      format: new ol.format.MVT(),
+      url: 'https://maps.theyuzone.com/maps/visited/family_photos_country_divisions/{z}/{x}/{y}.pbf',
+    });
+
+    // Dictionary to store assigned colors for each country
+    const countryDivisionsColors = {};
+
+    // Style function to apply random color per country
+    const getCountryDivisionsStyle = function (feature) {
+      const countryDivisionsId = feature.get('id');
+      if (!countryDivisionsColors[countryDivisionsId]) {
+        countryDivisionsColors[countryDivisionsId] = getRandomColor();
+      }
+
+      return new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: countryDivisionsColors[countryDivisionsId],
+        }),
+        stroke: new ol.style.Stroke({
+          color: 'gray',
+          width: 0.25,
+        }),
+      });
+    };
+
+    // Vector tile layers
+    const countryDivisionsLayer = new ol.layer.VectorTile({
+      source: countryDivisionsSource,
+      style: getCountryDivisionsStyle,
+    });
+
+    map.addLayer(countryDivisionsLayer);
+
+    // -----------------------------------------------
+
     const photosSource = new ol.source.VectorTile({
       format: new ol.format.MVT(),
       url: 'https://maps.theyuzone.com/maps/default/{z}/{x}/{y}.pbf'
@@ -94,14 +132,15 @@
       return function (feature, resolution) {
         const zoom = view.getZoom();
         let radius = 5;
-        let color = 'rgba(128, 90, 128, 0.70)';
+        let color = 'rgba(64, 45, 64, 0.70)';
 
         if (zoom < 10) {
           radius = 8;
           color = 'rgba(128, 90, 128, 0.1)';
         } else if (zoom > 15) {
           radius = 3;
-          color = 'rgba(128, 90, 128, 1.0)';
+          color = 'rgba(0, 0, 0, 1.0)';
+          //color = 'rgba(128, 90, 128, 1.0)';
         }
 
         return new ol.style.Style({
